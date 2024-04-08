@@ -219,7 +219,7 @@ class TelegramController
                 }
                 $telegramHelper->sendMessage(
                     $chatId,
-                    "Seçdiyiniz günə uyğun nəticə tapılmadı. Zəhmət olmasa yeni tarix seçin. \n{$timeRange}",
+                    "Seçdiyiniz günə uyğun nəticə tapılmadı. Zəhmət olmasa bu siyahıdan yeni tarix seçin. \n{$timeRange}",
                     $this->apiEndpoint
                 );
             }
