@@ -4,7 +4,6 @@ include_once __DIR__ . "../BookneticController.php";
 include_once __DIR__ . "/../vendor/simplehtmldom_1_9_1/simple_html_dom.php";
 include_once __DIR__ . "/../models/Service.php";
 include_once __DIR__ . "/../models/Messages.php";
-include_once __DIR__ . "/../traits/TelegramSender.php";
 
 class TelegramController
 {
@@ -105,9 +104,10 @@ class TelegramController
                         $contents
                     );
 
+                    $telegramHelper = new TelegramHelper();
 
                     if (isset($data["id"])) {
-                        $this->sendMessage(
+                        $telegramHelper->sendMessage(
                             $chatId,
                             "Rezervasiya üçün təşəkkür edirik, sizin rezervasiya nömrəniz: {$data["id"]}",
                             $this->apiEndpoint
@@ -118,7 +118,7 @@ class TelegramController
                         return $data["error_msg"];
                     }
 
-                    $this->sendMessage(
+                    $telegramHelper->sendMessage(
                         $chatId,
                         "",
                         $this->apiEndpoint
@@ -132,6 +132,7 @@ class TelegramController
 
     private function processMessage($chatId, $username, $messageText)
     {
+        $telegramHelper = new TelegramHelper();
         $services = new Services();
         $dateFormat = "d-m-Y";
         $dateTime = DateTime::createFromFormat($dateFormat, $messageText);
@@ -173,7 +174,7 @@ class TelegramController
             $html->clear();
             unset($html);
 
-            $this->sendMessage(
+            $telegramHelper->sendMessage(
                 $chatId,
                 "Salam {$username}! Mən Booking Bot for Booknetic. Zəhmət olmasa maraqlandığınız servisin ID-sini qeyd edin.\n{$servicesInfo}",
                 $this->apiEndpoint
@@ -181,7 +182,7 @@ class TelegramController
             $this->messagesModel->updateLatestMessageKey("start");
         } elseif ((int) $messageText == $messageText) {
             $this->messagesModel->updateLatestMessageKey("service_id");
-            $this->sendMessage(
+            $telegramHelper->sendMessage(
                 $chatId,
                 "Zəhmət olmasa tarix qeyd edin. (Nümunə: 10-04-2024)",
                 $this->apiEndpoint
@@ -222,7 +223,7 @@ class TelegramController
                     $number++;
                     $timeRange .= "<b>{$number}</b> : {$val["start_time"]} - {$val["end_time"]} \n";
                 }
-                $this->sendMessage(
+                $telegramHelper->sendMessage(
                     $chatId,
                     " {$timeRange}\nSizə uyğun saat aralığının başlama saatını seçin. (Nümunə: 18:30 )",
                     $this->apiEndpoint
@@ -238,13 +239,13 @@ class TelegramController
                     }
                 }
                 if ($timeRange != "") {
-                    $this->sendMessage(
+                    $telegramHelper->sendMessage(
                         $chatId,
                         "Seçdiyiniz günə uyğun nəticə tapılmadı. Zəhmət olmasa bu siyahıdan yeni tarix seçin. \n{$timeRange}",
                         $this->apiEndpoint
                     );
                 } else {
-                    $this->sendMessage(
+                    $telegramHelper->sendMessage(
                         $chatId,
                         "Təəssüf ki, bu servislə bağlı bütün tarixlər doludur. Digər servislərlə maraqlanırsızsa zəhmət olmasa yeni ID qeyd edin.",
                         $this->apiEndpoint
@@ -253,7 +254,7 @@ class TelegramController
             }
             $this->messagesModel->updateLatestMessageKey("date");
         } elseif ($time !== false && date("H:i", $time) === $messageText) {
-            $this->sendMessage(
+            $telegramHelper->sendMessage(
                 $chatId,
                 "Ad,Soyad,Email və Mobil nömrə qeyd edin.(Nümunə : Nurlan,Gulaliyev,example@gmail.com,0515555555). \n",
                 $this->apiEndpoint
@@ -281,7 +282,7 @@ class TelegramController
 
             $replyMarkup = json_encode($keyboard);
 
-            $this->sendMessage(
+            $telegramHelper->sendMessage(
                 $chatId,
                 $servicesInfo,
                 $this->apiEndpoint,

@@ -11,11 +11,11 @@ class Services
     public $service_id;
     public $title;
     public $price;
-    
+
     public function __construct()
     {
-        $db = Database::getInstance();
-        $this->conn = $db->getConnection(); 
+        $db = new Database();
+        $this->conn = $db->getConnection();
     }
 
     public function getAllServices()

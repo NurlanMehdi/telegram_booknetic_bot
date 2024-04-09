@@ -4,7 +4,6 @@ include_once __DIR__ . "../BookneticController.php";
 include_once __DIR__ . "/../vendor/simplehtmldom_1_9_1/simple_html_dom.php";
 include_once __DIR__ . "/../models/Service.php";
 include_once __DIR__ . "/../models/Messages.php";
-include_once __DIR__ . "/../traits/TelegramSender.php";
 
 class TelegramController
 {
