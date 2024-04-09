@@ -33,7 +33,22 @@ class Messages
     public function getMessageById($id)
     {
         try {
-            $query = "SELECT * FROM messages WHERE message_id = :id";
+            $query = "SELECT * FROM messages WHERE message_id = :id AND message_id != 0";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':id', $id, PDO::PARAM_INT); 
+            $stmt->execute();
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            return $result;
+        } catch (PDOException $e) {
+            die("Error retrieving message: " . $e->getMessage());
+        }
+    }
+
+    public function getMessageByChatId($id)
+    {
+        try {
+            $query = "SELECT username FROM messages WHERE chat_id = :id ORDER BY id DESC LIMIT 1";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT); 
             $stmt->execute();
@@ -68,12 +83,11 @@ class Messages
     public function updateLatestMessageKey($key)
     {
         try {
-            $query = "SELECT id FROM messages ORDER BY id DESC LIMIT 1";
+            $query = "SELECT id FROM messages WHERE message_id != 0 ORDER BY id DESC LIMIT 1";
             $stmt = $this->conn->prepare($query);
             $stmt->execute();
 
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
-
             $updateQuery = "UPDATE messages SET message_key = :new_key WHERE id = :id";
             $updateStmt = $this->conn->prepare($updateQuery);
             $updateStmt->bindParam(':new_key', $key, PDO::PARAM_STR);
@@ -112,6 +126,7 @@ class Messages
                   FROM " . $this->table_name . " m
                   WHERE m.message_key = :messageKey
                   AND m.chat_id = :chatId
+                  AND m.message_id != 0
                   ORDER BY m.id DESC
                   LIMIT 1";
 

@@ -1,9 +1,12 @@
 <?php
 
+include_once __DIR__ . "/../models/Messages.php";
+
 class TelegramHelper
 {
     public function sendMessage($chatId, $message, $apiEndpoint, $button = '')
     {
+        $messageModel = new Messages();
         $url = $apiEndpoint . 'sendMessage';
     
         $data = [
@@ -23,6 +26,14 @@ class TelegramHelper
     
         $context = stream_context_create($options);
         $result = file_get_contents($url, false, $context);
+
+        $messageModel->addMessage(
+            $chatId,
+            0,
+            0,
+            $message,
+            'bot'
+        );
     
         return $result;
     }

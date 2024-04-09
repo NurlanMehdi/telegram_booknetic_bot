@@ -31,6 +31,9 @@ class TelegramController
             foreach ($updates["result"] as $update) {
                 if (isset($update["message"])) {
                     $message = $update["message"];
+                    if ($message == "") {
+                        return false;
+                    }
                     $chatId = $message["chat"]["id"];
                     $messageText = $message["text"];
                     $messageId = $message["message_id"];
@@ -43,17 +46,19 @@ class TelegramController
                         $message["message_id"]
                     );
 
-                    if (!$checkMessage) {
-                        $this->messagesModel->addMessage(
-                            $chatId,
-                            $messageId,
-                            $updateId,
-                            $messageText,
-                            $username
-                        );
-                    }
+                    if ($this->checkBotMessage($chatId, $messageId)) {
+                        if (!$checkMessage) {
+                            $this->messagesModel->addMessage(
+                                $chatId,
+                                $messageId,
+                                $updateId,
+                                $messageText,
+                                $username
+                            );
+                        }
 
-                    $this->processMessage($chatId, $username, $messageText);
+                        $this->processMessage($chatId, $username, $messageText);
+                    }
                 } elseif (
                     isset($update["callback_query"]["data"]) &&
                     $update["callback_query"]["data"] == "reservation"
@@ -99,11 +104,26 @@ class TelegramController
                     );
 
                     $telegramHelper = new TelegramHelper();
+
+                    if (isset($data["id"])) {
+                        $telegramHelper->sendMessage(
+                            $chatId,
+                            "Rezervasiya üçün təşəkkür edirik, sizin rezervasiya nömrəniz: {$data["id"]}",
+                            $this->apiEndpoint
+                        );
+
+                        exit();
+                    } else {
+                        return $data["error_msg"];
+                    }
+
                     $telegramHelper->sendMessage(
                         $chatId,
-                        "Rezervasiya üçün təşəkkür edirik, sizin rezervasiya nömrəniz: {$data["id"]}",
+                        "",
                         $this->apiEndpoint
                     );
+
+                    return false;
                 }
             }
         }
@@ -217,11 +237,19 @@ class TelegramController
                         $timeRange .= "{$timeFormat->format("d-m-Y")} \n";
                     }
                 }
-                $telegramHelper->sendMessage(
-                    $chatId,
-                    "Seçdiyiniz günə uyğun nəticə tapılmadı. Zəhmət olmasa bu siyahıdan yeni tarix seçin. \n{$timeRange}",
-                    $this->apiEndpoint
-                );
+                if ($timeRange != "") {
+                    $telegramHelper->sendMessage(
+                        $chatId,
+                        "Seçdiyiniz günə uyğun nəticə tapılmadı. Zəhmət olmasa bu siyahıdan yeni tarix seçin. \n{$timeRange}",
+                        $this->apiEndpoint
+                    );
+                } else {
+                    $telegramHelper->sendMessage(
+                        $chatId,
+                        "Təəssüf ki, bu servislə bağlı bütün tarixlər doludur. Digər servislərlə maraqlanırsızsa zəhmət olmasa yeni ID qeyd edin.",
+                        $this->apiEndpoint
+                    );
+                }
             }
             $this->messagesModel->updateLatestMessageKey("date");
         } elseif ($time !== false && date("H:i", $time) === $messageText) {
@@ -261,6 +289,19 @@ class TelegramController
             );
 
             $this->messagesModel->updateLatestMessageKey("info");
+        }
+    }
+
+    public function checkBotMessage($chatId, $messageId)
+    {
+        $checkBotMessage = $this->messagesModel->getMessageByChatId($chatId);
+
+        $checkMessage = $this->messagesModel->getMessageById($messageId);
+
+        if ($checkBotMessage["username"] == "bot" && $checkMessage) {
+            return false;
+        } else {
+            return true;
         }
     }
 }
